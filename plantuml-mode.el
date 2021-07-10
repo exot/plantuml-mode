@@ -571,6 +571,7 @@ might follow).")
 Two variants for groups: keyword is either followed by whitespace and some text
 or it is followed by line end.")
 (defvar plantuml-indent-regexp-activate-start "^\s*activate\s+.+$")
+(defvar plantuml-indent-regexp-activate-start "^\s*\\(activate\s+.+\\|[^\\+]+\\+\\+.*\\)$")
 (defvar plantuml-indent-regexp-box-start "^\s*box\s+.+$")
 (defvar plantuml-indent-regexp-ref-start "^\s*ref\s+over\s+[^:]+?$")
 (defvar plantuml-indent-regexp-title-start "^\s*title\s*\\('.*\\)?$")
