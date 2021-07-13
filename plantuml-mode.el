@@ -582,7 +582,7 @@ or it is followed by line end.")
 (defvar plantuml-indent-regexp-newif-start "^[[:blank:]]*\\(?:else\\)?if[[:blank:]]+(.*)[[:blank:]]+then[[:blank:]]*.*$")
 (defvar plantuml-indent-regexp-loop-start "^[[:blank:]]*\\(?:repeat[[:blank:]]*\\|while[[:blank:]]+(.*).*\\)$")
 (defvar plantuml-indent-regexp-fork-start "^[[:blank:]]*\\(?:fork\\|split\\)\\(?:[[:blank:]]+again\\)?[[:blank:]]*$")
-(defvar plantuml-indent-regexp-case-start "^[[:blank:]]*\\(?:switch\\|case\\)[[:blank:]]-*(.*)[[:blank:]]*$")
+(defvar plantuml-indent-regexp-case-start "^[[:blank:]]*\\(?:switch\\|case[[:blank:]]*(.*)\\)[[:blank:]]*$")
 (defvar plantuml-indent-regexp-macro-start "^[[:blank:]]*!definelong.*$")
 (defvar plantuml-indent-regexp-user-control-start "^.*'.*[[:blank:]]*PLANTUML_MODE_INDENT_INCREASE[[:blank:]]*.*$")
 (defvar plantuml-indent-regexp-start (list plantuml-indent-regexp-block-start
@@ -616,7 +616,7 @@ or it is followed by line end.")
 (defvar plantuml-indent-regexp-newif-end "^[[:blank:]]*\\(endif\\|elseif\\|else\\)[[:blank:]]*.*$")
 (defvar plantuml-indent-regexp-loop-end "^[[:blank:]]*\\(repeat[[:blank:]]*while\\|endwhile\\)[[:blank:]]*.*$")
 (defvar plantuml-indent-regexp-fork-end "^[[:blank:]]*\\(\\(fork\\|split\\)[[:blank:]]+again\\|end[[:blank:]]+\\(fork\\|split\\)\\)[[:blank:]]*$")
-(defvar plantuml-indent-regexp-case-end "^[[:blank:]]*\\(case[[:blank:]]-*([^)]*)\\|endswitch\\)[[:blank:]]*\\('.*\\)?$")
+(defvar plantuml-indent-regexp-case-end "^[[:blank:]]*\\(case[[:blank:]]*([^)]*)\\|endswitch\\)[[:blank:]]*\\('.*\\)?$")
 (defvar plantuml-indent-regexp-macro-end "^[[:blank:]]*!enddefinelong[[:blank:]]*\\('.*\\)?$")
 (defvar plantuml-indent-regexp-user-control-end "^.*'.*[[:blank:]]*PLANTUML_MODE_INDENT_DECREASE[[:blank:]]*.*$")
 (defvar plantuml-indent-regexp-end (list plantuml-indent-regexp-block-end
@@ -647,14 +647,14 @@ provide a non-nil value for FORCE."
     (when (or (not plantuml-kwdList)
               force)
       (plantuml-init mode)
-      (let ((plantuml-types-regexp (concat "^[[:blank:]] *\\("
+      (let ((plantuml-types-regexp (concat "^[[:blank:]]*\\("
                                            (regexp-opt plantuml-types 'words)
-                                           "\\|\\<\\(note[[:blank:]] +over\\|note[[:blank:]] +\\(left\\|right\\|bottom\\|top\\)[[:blank:]] +\\(of\\)?\\)\\>\\|\\<\\(\\(left\\|center\\|right\\)[[:blank:]] +\\(header\\|footer\\)\\)\\>\\)"))
-            (plantuml-keywords-regexp (concat "^[[:blank:]] *"
+                                           "\\|\\<\\(note[[:blank:]]+over\\|note[[:blank:]]+\\(left\\|right\\|bottom\\|top\\)[[:blank:]]+\\(of\\)?\\)\\>\\|\\<\\(\\(left\\|center\\|right\\)[[:blank:]]+\\(header\\|footer\\)\\)\\>\\)"))
+            (plantuml-keywords-regexp (concat "^[[:blank:]]*"
                                               (regexp-opt plantuml-keywords 'words)
                                               "\\|\\(<\\|<|\\|\\*\\|o\\)\\(\\.+\\|-+\\)\\|\\(\\.+\\|-+\\)\\(>\\||>\\|\\*\\|o\\)\\|\\.\\{2,\\}\\|-\\{2,\\}"))
             (plantuml-builtins-regexp (regexp-opt plantuml-builtins 'words))
-            (plantuml-preprocessors-regexp (concat "^[[:blank:]] *"
+            (plantuml-preprocessors-regexp (concat "^[[:blank:]]*"
                                                    (regexp-opt plantuml-preprocessors 'words))))
 
         (setq plantuml-font-lock-keywords
