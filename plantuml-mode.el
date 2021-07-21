@@ -582,7 +582,7 @@ or it is followed by line end.")
 (defvar plantuml-indent-regexp-newif-start "^[[:blank:]]*\\(?:else\\)?if[[:blank:]]+(.*)[[:blank:]]+then[[:blank:]]*.*$")
 (defvar plantuml-indent-regexp-loop-start "^[[:blank:]]*\\(?:repeat[[:blank:]]*\\|while[[:blank:]]+(.*).*\\)$")
 (defvar plantuml-indent-regexp-fork-start "^[[:blank:]]*\\(?:fork\\|split\\)\\(?:[[:blank:]]+again\\)?[[:blank:]]*$")
-(defvar plantuml-indent-regexp-case-start "^[[:blank:]]*\\(?:switch\\|case[[:blank:]]*(.*)\\)[[:blank:]]*$")
+(defvar plantuml-indent-regexp-case-start "^[[:blank:]]*\\(?:switch\\|case\\)[[:blank:]]*(.*)[[:blank:]]*$")
 (defvar plantuml-indent-regexp-macro-start "^[[:blank:]]*!definelong.*$")
 (defvar plantuml-indent-regexp-user-control-start "^.*'.*[[:blank:]]*PLANTUML_MODE_INDENT_INCREASE[[:blank:]]*.*$")
 (defvar plantuml-indent-regexp-start (list plantuml-indent-regexp-block-start
