@@ -671,12 +671,7 @@ provide a non-nil value for FORCE."
         (mapc (lambda (x) (puthash x t plantuml-kwdList)) plantuml-keywords)
         (mapc (lambda (x) (puthash x t plantuml-kwdList)) plantuml-builtins)
         (mapc (lambda (x) (puthash x t plantuml-kwdList)) plantuml-preprocessors)
-        (put 'plantuml-kwdList 'risky-local-variable t)
-
-        (setq plantuml-types nil
-              plantuml-keywords nil
-              plantuml-builtins nil
-              plantuml-preprocessors nil)))))
+        (put 'plantuml-kwdList 'risky-local-variable t)))))
 
 (defun plantuml-complete-symbol ()
   "Perform keyword completion on word before cursor."
