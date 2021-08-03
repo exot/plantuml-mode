@@ -148,6 +148,11 @@
 (defcustom plantuml-indent-level 8
   "Indentation level of PlantUML lines")
 
+(defcustom plantuml-export-overwrite-files nil
+  "Control whether file exporting is allowed to silently overwrite files."
+  :type 'boolean
+  :group 'plantuml)
+
 (defun plantuml-jar-render-command (&rest arguments)
   "Create a command line to execute PlantUML with arguments (as ARGUMENTS)."
   (let* ((cmd-list (append plantuml-java-args (list (expand-file-name plantuml-jar-path)) plantuml-jar-args arguments))
@@ -602,7 +607,8 @@ only the region will be exported."
     (setq export-file-name (concat (file-name-sans-extension original-file-name)
                                    "."
                                    plantuml-output-type))
-    (when (file-exists-p export-file-name)
+    (when (and (file-exists-p export-file-name)
+               (not plantuml-export-overwrite-files))
       (user-error "File %s already exists, will not export"
                   export-file-name))
     (message "Exporting to %s ..." export-file-name)
