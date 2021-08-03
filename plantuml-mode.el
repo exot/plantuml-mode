@@ -602,6 +602,7 @@ only the region will be exported."
                           (buffer-string)))
         export-file-name
         errors-during-export)
+
     (unless original-file-name
       (user-error "Current buffer is not associated with any file, cannot determine output file name"))
     (setq export-file-name (concat (file-name-sans-extension original-file-name)
@@ -611,18 +612,28 @@ only the region will be exported."
                (not plantuml-export-overwrite-files))
       (user-error "File %s already exists, will not export"
                   export-file-name))
+
     (message "Exporting to %s ..." export-file-name)
-    (with-temp-buffer
+
+    (let ((target-buffer (generate-new-buffer " *temp*")))
+      ;; We do not use `with-temp-buffer' here, as we want to stay in the
+      ;; current buffer containing the plantuml diagram.  The reason for this is
+      ;; that `planumlt-output-type' is local to the current buffer, and
+      ;; switching the buffer using `with-temp-buffer' may change its value and
+      ;; thus may give inconsistent results (e.g., files with ending "svg" that
+      ;; still contain a png).
       (setq errors-during-export
             (plantuml-export-string-to-buffer (plantuml-get-exec-mode)
                                               diagram-string
-                                              (current-buffer)))
+                                              target-buffer))
       ;; We export the result even in case of errors, as plantuml writes its
       ;; error messages to the target output.  Furthermore, exporting is always
       ;; done without any conversion, as plantuml already outputs the desired
       ;; format bit by bit.
-      (let ((coding-system-for-write 'binary))
-        (write-file export-file-name)))
+      (with-current-buffer target-buffer
+        (let ((coding-system-for-write 'binary))
+          (write-file export-file-name))))
+
     (if errors-during-export
         (message "Exporting to %s ... failed (see file for details)" export-file-name)
       (message "Exporting to %s ... done" export-file-name))))
