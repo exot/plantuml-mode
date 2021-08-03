@@ -617,9 +617,10 @@ only the region will be exported."
             (plantuml-export-string-to-buffer (plantuml-get-exec-mode)
                                               diagram-string
                                               (current-buffer)))
-      ;; We export the result even in case of errors, as plantuml writes it's
-      ;; error messages to the target output.  Exporting is always done without
-      ;; any conversion.
+      ;; We export the result even in case of errors, as plantuml writes its
+      ;; error messages to the target output.  Furthermore, exporting is always
+      ;; done without any conversion, as plantuml already outputs the desired
+      ;; format bit by bit.
       (let ((coding-system-for-write 'binary))
         (write-file export-file-name)))
     (if errors-during-export
