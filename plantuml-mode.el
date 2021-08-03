@@ -552,11 +552,7 @@ Uses prefix (as PREFIX) to choose where to display it:
 (cl-defgeneric plantuml-export-string-to-buffer (exec-mode string buffer)
   "Export STRING to plantuml diagram using the given EXEC-MODE.
 Use BUFFER to write the diagram to, clearing it first.  This
-buffer can be written to a file or be displayed directly.")
-
-(cl-defmethod plantuml-export-string-to-buffer (exec-mode string buffer)
-  "Fallback method when EXEC-MODE is unknown.
-STRING and BUFFER are ignored."
+buffer can be written to a file or be displayed directly."
   (ignore string buffer)
   (user-error "Exporting with exec-mode %s is not supported (yet)" exec-mode))
 
