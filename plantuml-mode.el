@@ -615,6 +615,11 @@ only the region will be exported."
     ;; otherwise create a new buffer.
     (let ((target-buffer (or (find-buffer-visiting export-file-name)
                              (generate-new-buffer " *temp*"))))
+      ;; When the buffer is in image-mode, erasing it's contents is not
+      ;; possible, even when disabling `read-only-mode' explicitly.  Let's just
+      ;; switch to `fundamental-mode' to keep things simple.
+      (with-current-buffer target-buffer
+        (fundamental-mode))
       ;; We do not use `with-temp-buffer' here, as we want to stay in the
       ;; current buffer containing the plantuml diagram.  The reason for this is
       ;; that `planumlt-output-type' is local to the current buffer, and
@@ -631,7 +636,13 @@ only the region will be exported."
       ;; format bit by bit.
       (with-current-buffer target-buffer
         (let ((coding-system-for-write 'binary))
-          (write-file export-file-name))))
+          ;; When exporting, we do not want to display the image in Emacs
+          ;; itself; as rendering the image in Emacs may take a significant
+          ;; amount of time, we try to inhibit the automatic image display
+          ;; by binding `image-mode' to `image-mode-as-text'
+          (let ((auto-mode-alist nil)
+                (magic-fallback-mode-alist nil))
+            (write-file export-file-name)))))
 
     (if errors-during-export
         (message "Exporting to %s ... failed (see file for details)" export-file-name)
