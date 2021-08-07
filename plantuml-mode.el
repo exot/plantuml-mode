@@ -611,7 +611,10 @@ only the region will be exported."
 
     (message "Exporting to %s ..." export-file-name)
 
-    (let ((target-buffer (generate-new-buffer " *temp*")))
+    ;; If there's already a buffer visiting that file, use that for the export;
+    ;; otherwise create a new buffer.
+    (let ((target-buffer (or (find-buffer-visiting export-file-name)
+                             (generate-new-buffer " *temp*"))))
       ;; We do not use `with-temp-buffer' here, as we want to stay in the
       ;; current buffer containing the plantuml diagram.  The reason for this is
       ;; that `planumlt-output-type' is local to the current buffer, and
