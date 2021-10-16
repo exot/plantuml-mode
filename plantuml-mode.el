@@ -148,7 +148,7 @@
 (defcustom plantuml-indent-level tab-width
   "Indentation level of PlantUML lines")
 
-(defcustom plantuml-export-overwrite-files nil
+(defcustom plantuml-confirm-overwrite-on-export t
   "Control whether file exporting is allowed to silently overwrite files."
   :type 'boolean
   :group 'plantuml)
@@ -604,10 +604,10 @@ only the region will be exported."
     (setq export-file-name (concat (file-name-sans-extension original-file-name)
                                    "."
                                    plantuml-output-type))
-    (when (and (file-exists-p export-file-name)
-               (not plantuml-export-overwrite-files))
-      (user-error "File %s already exists, will not export"
-                  export-file-name))
+    (unless (or (not (file-exists-p export-file-name))
+                (not plantuml-confirm-overwrite-on-export)
+                (yes-or-no-p (message "File %s already exists, overwrite?" export-file-name)))
+      (user-error "File %s already exists, will not overwrite" export-file-name))
 
     (message "Exporting to %s ..." export-file-name)
 
