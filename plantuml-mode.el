@@ -157,7 +157,7 @@ see `plantuml-executable-path'."
   :type 'boolean
   :group 'plantuml)
 
-(defcustom plantuml-indent-level 8
+(defcustom plantuml-indent-level tab-width
   "Indentation level of PlantUML lines."
   :type 'natnum
   :group 'plantuml)
