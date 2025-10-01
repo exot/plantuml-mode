@@ -109,6 +109,8 @@
 (defvar plantuml-mode-map
   (let ((keymap (make-sparse-keymap)))
     (define-key keymap (kbd "C-c C-c") 'plantuml-preview)
+    (define-key keymap (kbd "C-c C-e") 'plantuml-export)
+    (define-key keymap (kbd "C-c C-v") 'plantuml-view-exported-file)
     keymap)
   "Keymap for plantuml-mode.")
 
@@ -179,6 +181,11 @@ Works only if `!theme' does not appear  in the diagram to be displayed."
   "The color SVG rendering will use as background.
 Useful when the default transparent color makes the diagram hard to see."
   :type 'string
+  :group 'plantuml)
+
+(defcustom plantuml-confirm-overwrite-on-export t
+  "Control whether file exporting is allowed to silently overwrite files."
+  :type 'boolean
   :group 'plantuml)
 
 (defun plantuml-jar-render-command (&rest arguments)
@@ -653,6 +660,145 @@ Uses prefix (as PREFIX) to choose where to display it:
                        "`puml-mode' is now deprecated and no longer updated, but it's still present in your system. \
 You should move your configuration to use `plantuml-mode'. \
 See more at https://github.com/skuro/puml-mode/issues/26")))
+
+
+;; Exporting to buffers
+
+(cl-defgeneric plantuml-export-string-to-buffer (exec-mode string buffer)
+  "Export STRING to plantuml diagram using the given EXEC-MODE.
+Use BUFFER to write the diagram to, clearing it first.  This
+buffer can be written to a file or be displayed directly."
+  (ignore string buffer)
+  (user-error "Exporting with exec-mode %s is not supported (yet)" exec-mode))
+
+(cl-defmethod plantuml-export-string-to-buffer ((exec-mode (eql jar)) string buffer)
+  "Method to export plantuml diagrams in STRING to BUFFER using jar EXEC-MODE."
+  (ignore exec-mode)
+  (unless (bufferp buffer)
+    (user-error "Given argument BUFFER is not a buffer: %s" buffer))
+
+  (let ((java-args (if (<= 8 (plantuml-jar-java-version))
+                       (remove "--illegal-access=deny" plantuml-java-args)
+                     plantuml-java-args)))
+
+    (with-current-buffer buffer
+      (erase-buffer))
+
+    (let ((return-code (apply #'call-process-region
+                              string nil
+                              plantuml-java-command
+                              nil buffer nil
+                              `(,@java-args
+                                ,(expand-file-name plantuml-jar-path)
+                                ,(plantuml-jar-output-type-opt plantuml-output-type)
+                                ,@plantuml-jar-args
+                                "-p"))))
+
+      ;; If an error occured, return the return-code, and nil otherwise to
+      ;; signal everything's fine.
+      (unless (zerop return-code)
+        return-code))))
+
+;; TODO add support for exec-modes `server' and `executable'
+
+(defun plantuml--export-file-name ()
+  "Return export file name based on the file name associated with the current buffer."
+  (let ((original-file-name (buffer-file-name (current-buffer))))
+
+    (unless original-file-name
+      (error "Current buffer is not associated with any file, cannot determine output file name"))
+
+    (concat (file-name-sans-extension original-file-name)
+            "."
+            plantuml-output-type)))
+
+(defun plantuml-export (&optional export-file-name)
+  "Export a plantuml diagram to a file.
+Exports the whole buffer unless a region is active, in which case
+only the region will be exported.  Unless EXPORT-FILE-NAME is
+explicitly given, the file name of the exported file will be
+determined based on the file name of the current plantuml-file
+and `plantuml-output-type'"
+  (interactive)
+  (let ((diagram-string (if mark-active
+                            (buffer-substring-no-properties
+                             (region-beginning) (region-end))
+                          (buffer-string)))
+        errors-during-export)
+
+    (unless export-file-name
+      (setq export-file-name (plantuml--export-file-name)))
+
+    (unless (or (not (file-exists-p export-file-name))
+                (not plantuml-confirm-overwrite-on-export)
+                (yes-or-no-p (message "File %s already exists, overwrite?" export-file-name)))
+      (user-error "File %s already exists, will not overwrite" export-file-name))
+
+    (message "Exporting to %s ..." export-file-name)
+
+    ;; If there's already a buffer visiting that file, use that for the export;
+    ;; otherwise create a new buffer.
+    (let ((target-buffer (or (find-buffer-visiting export-file-name)
+                             (generate-new-buffer " *temp*"))))
+      ;; When the buffer is in image-mode, erasing it's contents is not
+      ;; possible, even when disabling `read-only-mode' explicitly.  Let's just
+      ;; switch to `fundamental-mode' to keep things simple.
+      (with-current-buffer target-buffer
+        (fundamental-mode))
+      ;; We do not use `with-temp-buffer' here, as we want to stay in the
+      ;; current buffer containing the plantuml diagram.  The reason for this is
+      ;; that `planumlt-output-type' is local to the current buffer, and
+      ;; switching the buffer using `with-temp-buffer' may change its value and
+      ;; thus may give inconsistent results (e.g., files with ending "svg" that
+      ;; still contain a png).
+      (setq errors-during-export
+            (plantuml-export-string-to-buffer (plantuml-get-exec-mode)
+                                              diagram-string
+                                              target-buffer))
+      ;; We export the result even in case of errors, as plantuml writes its
+      ;; error messages to the target output.  Furthermore, exporting is always
+      ;; done without any conversion, as plantuml already outputs the desired
+      ;; format bit by bit.
+      (with-current-buffer target-buffer
+        (let ((coding-system-for-write 'binary))
+          ;; When exporting, we do not want to display the image in Emacs
+          ;; itself; as rendering the image in Emacs may take a significant
+          ;; amount of time, we try to inhibit the automatic image display
+          ;; by binding `image-mode' to `image-mode-as-text'
+          (let ((auto-mode-alist nil)
+                (magic-fallback-mode-alist nil))
+            (write-file export-file-name)))))
+
+    (if errors-during-export
+        (message "Exporting to %s ... failed (see file for details)" export-file-name)
+      (message "Exporting to %s ... done" export-file-name))))
+
+
+
+;; View exported files
+
+(defun plantuml-view-exported-file ()
+  "Open file exported from current plantuml-buffer in external application.
+When an exported file does not exist yet, ask whether it should
+be generated first."
+  (interactive)
+
+  (let ((export-file-name (plantuml--export-file-name)))
+
+    (when (not (file-exists-p export-file-name))
+      (if (yes-or-no-p (message "Export file %s does not exist yet, export current buffer?"
+                                export-file-name))
+          (plantuml-export export-file-name)
+        (user-error "Export file name %s does not exist yet and export has been denied, aborting"
+                    export-file-name)))
+
+    (cl-case system-type
+      ((windows-nt) (w32-shell-execute "open" export-file-name))
+      ((cygwin) (start-process "" nil "cygstart" export-file-name))
+      (otherwise (start-process "" nil "xdg-open" export-file-name)))))
+
+
+;;
 
 (defun plantuml-init-once (&optional mode)
   "Ensure initialization only happens once.
